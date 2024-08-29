@@ -8,47 +8,6 @@
 import SwiftUI
 
 struct PhotosScreen: View {
-    final class ViewModel: ObservableObject {
-        let apiClient = APIClient()
-        @Published var items = [Photo]()
-        private(set) var page = 0
-        private(set) var nextPage: Int?
-        private var task: Task<Void, Never>?
-        
-        @MainActor
-        func reload() {
-            task?.cancel()
-            let page = 1
-            task = Task {
-                do {
-                    let response = try await apiClient.getPhotos(page: page)
-                    self.page = page
-                    self.items = response.photos
-                    self.nextPage = response.nextPage
-                } catch {
-                    print(error)
-                }
-            }
-        }
-        
-        @MainActor
-        func loadNext() {
-            guard let page = nextPage else {
-                return
-            }
-            task?.cancel()
-            task = Task {
-                do {
-                    let response = try await apiClient.getPhotos(page: page)
-                    self.page = page
-                    self.items.append(contentsOf: response.photos)
-                    self.nextPage = response.nextPage
-                } catch {
-                    print(error)
-                }
-            }
-        }
-    }
     @ObservedObject var viewModel: ViewModel
 
     var body: some View {
@@ -100,6 +59,54 @@ struct PhotosScreen: View {
             viewModel.reload()
         }
         .navigationTitle("Photos (\(viewModel.items.count))")
+    }
+}
+
+extension PhotosScreen {
+    final class ViewModel: ObservableObject {
+        let apiClient = APIClient()
+        @Published var items = [Photo]()
+        private(set) var page = 0
+        private(set) var nextPage: Int?
+        private var task: Task<Void, Never>?
+        
+        @MainActor
+        func reload() {
+            task?.cancel()
+            let page = 1
+            task = Task {
+                defer { self.task = nil }
+                do {
+                    let response = try await apiClient.getPhotos(page: page)
+                    self.page = page
+                    self.items = response.photos
+                    self.nextPage = response.nextPage
+                } catch {
+                    // TODO: - error handling
+                    print(error)
+                }
+            }
+        }
+        
+        @MainActor
+        func loadNext() {
+            guard let page = nextPage else {
+                return
+            }
+            task?.cancel()
+            task = Task {
+                defer { self.task = nil }
+                do {
+                    let response = try await apiClient.getPhotos(page: page)
+                    self.page = page
+                    self.items.append(contentsOf: response.photos)
+                    self.nextPage = response.nextPage
+                } catch {
+                    // TODO: - error handling
+                    print(error)
+                }
+            }
+        }
     }
 }
 
