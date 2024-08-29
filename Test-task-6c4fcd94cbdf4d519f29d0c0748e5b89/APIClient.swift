@@ -11,10 +11,16 @@ struct APIClient {
     enum Error: Swift.Error {
         case badUrl
     }
+    
+    var baseApi: String {
+        "https://api.pexels.com/v1"
+    }
 
     func getPhotos(page: Int) async throws -> PhotosResponse {
-        let perPage = 35
-        guard let url = URL(string: "https://api.pexels.com/v1/curated?page=\(page)&per_page=\(perPage)") else {
+        enum Constants {
+            static var perPage: Int { 35 }
+        }
+        guard let url = URL(string: "\(baseApi)/curated?page=\(page)&per_page=\(Constants.perPage)") else {
             throw Error.badUrl
         }
         var urlRequest = URLRequest(url: url)
@@ -26,7 +32,7 @@ struct APIClient {
         decoder.keyDecodingStrategy = .convertFromSnakeCase
         let apiResponse = try decoder.decode(PhotosAPIResponse.self, from: data)
         return PhotosResponse(
-            nextPage: apiResponse.perPage < perPage ? nil : (page + 1),
+            nextPage: apiResponse.perPage < Constants.perPage ? nil : (page + 1),
             photos: apiResponse.photos
         )
     }
