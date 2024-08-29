@@ -9,9 +9,13 @@ import SwiftUI
 
 @main
 struct Test_task_6c4fcd94cbdf4d519f29d0c0748e5b89App: App {
+    let photosViewModel = PhotosScreen.ViewModel()
+    
     var body: some Scene {
         WindowGroup {
-            ContentView()
+            NavigationView {
+                PhotosScreen(viewModel: photosViewModel)
+            }
         }
     }
 }
